@@ -199,4 +199,3 @@ $("#call-form").addEventListener("submit", startCall);
 $("#cancel-call").addEventListener("click", cancelCall);
 $("#operator-token").value = state.token;
 playWalkthrough();
-void checkStatus();
