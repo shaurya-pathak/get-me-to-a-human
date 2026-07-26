@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="A phone agent that gets a person on the line." />
+    <title>Get Me to a Human · Shaurya Pathak</title>
+    <link rel="icon" href="./icon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./styles.css" />
+    <script src="./app.js" defer></script>
+  </head>
+  <body>
+    <main>
+      <nav>
+        <a href="https://shauryapathak.com">Shaurya Pathak</a>
+        <span>Personal project</span>
+      </nav>
+
+      <header class="intro">
+        <h1>Get Me to a Human</h1>
+        <p>Give it a company and an objective. It navigates the phone tree, waits for a representative, and calls you when someone answers.</p>
+      </header>
+
+      <section id="server-status" class="server-status checking" aria-live="polite">
+        <h2 id="server-state">Checking MacBook</h2>
+        <p id="server-message">The public site stays online. Live voice processing runs on my MacBook.</p>
+        <button id="status-retry" class="text-button hidden" type="button">Check again</button>
+      </section>
+
+      <section class="section">
+        <div class="section-heading">
+          <h2>What happens on a call</h2>
+          <button id="play-walkthrough" class="text-button" type="button">Play example</button>
+        </div>
+        <ol id="walkthrough" class="walkthrough">
+          <li><span>You</span><p>Get me to American Express Purchase Protection about a stolen item.</p></li>
+          <li><span>Agent</span><p>Calls American Express and listens to the phone tree.</p></li>
+          <li><span>Company</span><p>“For Purchase Protection, press 2.”</p></li>
+          <li><span>Agent</span><p>Presses 2, explains the handoff, and waits on hold.</p></li>
+          <li><span>Company</span><p>“Purchase Protection, how can I help?”</p></li>
+          <li><span>Agent</span><p>Calls you, confirms you answered, and joins both calls.</p></li>
+        </ol>
+        <p class="quiet">Recorded example. It does not place a call.</p>
+      </section>
+
+      <section class="section">
+        <h2>How it works</h2>
+        <div class="architecture" aria-label="System architecture">
+          <div class="architecture-node">
+            <strong>Static website</strong>
+            <span>GitHub Pages</span>
+            <small>Always available</small>
+          </div>
+          <span class="architecture-arrow" aria-hidden="true">→</span>
+          <div class="architecture-node emphasis">
+            <strong>MacBook voice server</strong>
+            <span>FastAPI · Parakeet STT · Qwen3-TTS</span>
+            <small>Conversation and audio processing</small>
+          </div>
+          <span class="architecture-arrow" aria-hidden="true">↔</span>
+          <div class="architecture-node">
+            <strong>Phone network</strong>
+            <span>Twilio Media Streams</span>
+            <small>Company and callback legs</small>
+          </div>
+        </div>
+        <p class="architecture-note">The website and voice server deploy separately. The browser reaches the Mac through an HTTPS/WebSocket Cloudflare Tunnel. DeepSeek supplies the conversation model; speech recognition and synthesis run on the Mac.</p>
+      </section>
+
+      <section id="live-demo" class="section live-demo" aria-labelledby="live-demo-title">
+        <h2 id="live-demo-title">Live operator demo</h2>
+        <p id="live-demo-intro">Available when the MacBook server is online. Starting a real call requires the private operator token.</p>
+
+        <form id="unlock-form" class="unlock-form hidden">
+          <label>
+            Operator token
+            <input id="operator-token" type="password" autocomplete="off" required />
+          </label>
+          <button type="submit">Unlock</button>
+          <p id="unlock-error" class="error" role="alert"></p>
+        </form>
+
+        <form id="call-form" class="call-form hidden">
+          <div class="field-grid">
+            <label>Company<input id="company" required placeholder="American Express" /></label>
+            <label>Company phone<input id="company-phone" required inputmode="tel" placeholder="+1 800 000 0000" /></label>
+          </div>
+          <label>What do you need?<textarea id="objective" required rows="3" placeholder="Get me to a representative who can help with…"></textarea></label>
+          <div class="field-grid">
+            <label>Your name<input id="caller-name" required autocomplete="name" /></label>
+            <label>Call you at<input id="callback-phone" required inputmode="tel" autocomplete="tel" /></label>
+          </div>
+          <button type="submit">Start real call</button>
+          <p class="quiet">This creates a paid Twilio call. Do not enter passwords, card details, CVVs, or Social Security numbers.</p>
+          <p id="call-error" class="error" role="alert"></p>
+        </form>
+
+        <div id="active-call" class="active-call hidden" aria-live="polite">
+          <div class="active-heading">
+            <h3 id="active-company"></h3>
+            <span id="active-status"></span>
+          </div>
+          <p id="active-objective"></p>
+          <div id="transcript" class="transcript"></div>
+          <button id="cancel-call" class="secondary" type="button">Stop call</button>
+          <p id="active-error" class="error" role="alert"></p>
+        </div>
+      </section>
+
+      <footer>
+        <a href="https://shauryapathak.com">shauryapathak.com</a>
+        <a href="mailto:shaurypathak24@gmail.com">shaurypathak24@gmail.com</a>
+      </footer>
+    </main>
+  </body>
+</html>

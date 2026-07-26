@@ -1,0 +1,14 @@
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: no-referrer
+  Permissions-Policy: camera=(), microphone=(), geolocation=()
+  Content-Security-Policy: default-src 'self'; connect-src https://api.human.shauryapathak.com http://127.0.0.1:8765 http://localhost:8765; style-src 'self'; script-src 'self'; img-src 'self'; base-uri 'none'; form-action 'self' mailto:; frame-ancestors 'none'
+
+/index.html
+  Cache-Control: public, max-age=0, must-revalidate
+
+/*.css
+  Cache-Control: public, max-age=3600
+
+/*.js
+  Cache-Control: public, max-age=3600
