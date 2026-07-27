@@ -45,26 +45,39 @@
 
       <section class="section">
         <h2>How it works</h2>
-        <div class="architecture" aria-label="System architecture">
-          <div class="architecture-node">
-            <strong>Static website</strong>
-            <span>GitHub Pages</span>
-            <small>Always available</small>
-          </div>
-          <span class="architecture-arrow" aria-hidden="true">→</span>
-          <div class="architecture-node emphasis">
-            <strong>MacBook voice server</strong>
-            <span>FastAPI · Parakeet STT · Qwen3-TTS</span>
-            <small>Conversation and audio processing</small>
-          </div>
-          <span class="architecture-arrow" aria-hidden="true">↔</span>
-          <div class="architecture-node">
-            <strong>Phone network</strong>
-            <span>Twilio Media Streams</span>
-            <small>Company and callback legs</small>
-          </div>
-        </div>
-        <p class="architecture-note">The website and voice server deploy separately. The browser reaches the Mac through an HTTPS/WebSocket Cloudflare Tunnel. DeepSeek supplies the conversation model; speech recognition and synthesis run on the Mac.</p>
+        <p class="pipeline-intro">Every time someone speaks, the agent runs one short voice-processing loop.</p>
+        <ol class="pipeline" aria-label="Voice processing pipeline">
+          <li>
+            <span class="pipeline-number">1</span>
+            <div><strong>Receive phone audio</strong><span>Twilio streams the live call to the MacBook over a WebSocket.</span></div>
+            <small>Twilio Media Streams</small>
+          </li>
+          <li>
+            <span class="pipeline-number">2</span>
+            <div><strong>Turn speech into text</strong><span>Parakeet transcribes the latest audio locally so the agent can read it.</span></div>
+            <small>Parakeet STT · local</small>
+          </li>
+          <li>
+            <span class="pipeline-number">3</span>
+            <div><strong>Decide what to do</strong><span>The conversation model reads the transcript and objective, then chooses a reply or an action such as pressing a key.</span></div>
+            <small>DeepSeek · agent logic</small>
+          </li>
+          <li>
+            <span class="pipeline-number">4</span>
+            <div><strong>Turn the reply into speech</strong><span>Qwen generates the response audio on the MacBook.</span></div>
+            <small>Qwen3-TTS · local</small>
+          </li>
+          <li>
+            <span class="pipeline-number">5</span>
+            <div><strong>Send it back to the call</strong><span>Twilio plays the response or sends the selected keypad input. The loop repeats for the next turn.</span></div>
+            <small>Streaming audio · DTMF</small>
+          </li>
+          <li class="pipeline-handoff">
+            <span class="pipeline-number">✓</span>
+            <div><strong>Connect you when a human answers</strong><span>The agent calls your phone and bridges both call legs. You take over with the representative already on the line.</span></div>
+            <small>Human handoff</small>
+          </li>
+        </ol>
       </section>
 
       <section id="live-demo" class="section live-demo" aria-labelledby="live-demo-title">

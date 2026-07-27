@@ -37,14 +37,17 @@ h1 { margin-bottom: 10px; font-size: 32px; line-height: 1.2; letter-spacing: -.0
 .walkthrough span { color: var(--muted); font-size: 13px; font-weight: 600; }
 .walkthrough p { margin: 0; }
 .walkthrough + .quiet { margin: 10px 0 0; }
-.architecture { display: grid; grid-template-columns: 1fr auto 1.35fr auto 1fr; align-items: center; gap: 12px; }
-.architecture-node { min-height: 132px; display: flex; flex-direction: column; justify-content: center; padding: 16px; border: 1px solid var(--line); background: var(--surface); }
-.architecture-node.emphasis { border-color: #9eb6a7; }
-.architecture-node strong { margin-bottom: 6px; font-size: 14px; }
-.architecture-node span { color: var(--muted); font-size: 13px; }
-.architecture-node small { margin-top: 14px; color: var(--muted); font-size: 11px; }
-.architecture-arrow { color: var(--muted); }
-.architecture-note { max-width: 720px; margin: 16px 0 0; color: var(--muted); font-size: 13px; }
+.pipeline-intro { margin: -8px 0 18px; color: var(--muted); font-size: 14px; }
+.pipeline { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--line); }
+.pipeline li { display: grid; grid-template-columns: 28px minmax(0, 1fr) 150px; gap: 16px; align-items: start; padding: 16px 0; border-bottom: 1px solid var(--line); }
+.pipeline-number { width: 24px; height: 24px; display: grid; place-items: center; border: 1px solid #bfc5c1; border-radius: 50%; color: var(--muted); font-size: 12px; font-weight: 650; }
+.pipeline div { display: grid; gap: 2px; }
+.pipeline strong { font-size: 14px; }
+.pipeline div span { color: var(--muted); font-size: 13px; }
+.pipeline small { padding-top: 2px; color: var(--muted); font-size: 11px; text-align: right; }
+.pipeline-handoff { margin-top: 8px; border-top: 1px solid #9eb6a7; }
+.pipeline-handoff .pipeline-number { border-color: #7ea08a; color: var(--accent); }
+.pipeline-handoff strong { color: var(--accent); }
 .live-demo > p { max-width: 680px; color: var(--muted); }
 form { display: grid; gap: 18px; max-width: 680px; margin-top: 22px; }
 .unlock-form { grid-template-columns: minmax(0, 1fr) auto; align-items: end; }
@@ -73,8 +76,8 @@ footer { min-height: 80px; display: flex; align-items: center; gap: 22px; color:
   main { width: min(100% - 28px, 880px); }
   .intro { padding-top: 32px; }
   h1 { font-size: 27px; }
-  .architecture { grid-template-columns: 1fr; }
-  .architecture-arrow { transform: rotate(90deg); justify-self: center; }
+  .pipeline li { grid-template-columns: 28px minmax(0, 1fr); gap: 12px; }
+  .pipeline small { grid-column: 2; padding-top: 4px; text-align: left; }
   .field-grid, .unlock-form { grid-template-columns: 1fr; }
   .walkthrough li { grid-template-columns: 72px 1fr; gap: 10px; }
   footer { align-items: flex-start; flex-direction: column; justify-content: center; gap: 4px; }
