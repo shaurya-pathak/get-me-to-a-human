@@ -5,6 +5,8 @@ const speech = window.speechSynthesis;
 let manualTimer = null;
 let manualSeconds = 0;
 let manualStage = "idle";
+let manualDelays = [];
+let manualPromptToken = 0;
 let currentUtterance = null;
 let agentTimers = [];
 let agentSeconds = 0;
@@ -38,6 +40,73 @@ const prompts = {
   spanish: { text: "Esta demostración continúa solamente en inglés. Oprima uno para continuar.", next: { "1": "main" } },
   selfservice: { text: "You can complete this request faster in the Northstar mobile app. To receive a text message with a link, press one. To speak with a banker, press zero.", next: { "0": "hold", "1": "hold" } },
   hold: { text: "Please hold while we connect you. Your estimated wait time is greater than twenty minutes.", next: {} },
+};
+
+const manualPromptLines = {
+  welcome: [
+    ["Thank you for calling Northstar Bank."],
+    ["Your call may be monitored or recorded for quality and training purposes."],
+    ["Before we begin, hear about our new Horizon Premier credit card."],
+    ["Earn sixty thousand bonus points after qualifying purchases."],
+    ["Visit northstar bank dot com slash horizon to learn more."],
+    ["To continue in English, press one.", true],
+    ["Para español, oprima el dos.", true],
+  ],
+  main: [
+    ["Please listen carefully. Our menu options have recently changed."],
+    ["For balances, recent transactions, or statements, press one.", true],
+    ["For cards, including lost or stolen cards, press two.", true],
+    ["For transfers, payments, or bill pay, press three.", true],
+    ["For loans or mortgages, press four.", true],
+    ["For all other banking needs, press five.", true],
+    ["To hear these options again, press nine.", true],
+  ],
+  accounts: [
+    ["For checking accounts, press one.", true],
+    ["For savings accounts, press two.", true],
+    ["For certificates of deposit, press three.", true],
+    ["To return to the previous menu, press star.", true],
+  ],
+  checking: [
+    ["For your balance, press one.", true],
+    ["For recent activity, press two.", true],
+    ["To order checks, press three.", true],
+    ["To close an account or speak with a banker, press four.", true],
+    ["To return to the previous menu, press star.", true],
+  ],
+  cards: [
+    ["If your card was lost or stolen, press one.", true],
+    ["To dispute a transaction, press two.", true],
+    ["For rewards or a new application, press three.", true],
+    ["For all other card questions, press four.", true],
+  ],
+  transfers: [
+    ["For transfers between Northstar accounts, press one.", true],
+    ["For external transfers, press two.", true],
+    ["For bill pay, press three.", true],
+    ["To speak with a banker, press zero.", true],
+  ],
+  loans: [
+    ["For mortgage servicing, press one.", true],
+    ["For home equity, press two.", true],
+    ["For auto loans, press three.", true],
+    ["For personal loans, press four.", true],
+  ],
+  other: [
+    ["To change your address, press one.", true],
+    ["To find a branch, press two.", true],
+    ["For another request, press zero to speak with a banker.", true],
+  ],
+  spanish: [["Esta demostración continúa solamente en inglés."], ["Oprima uno para continuar.", true]],
+  selfservice: [
+    ["You can complete this request faster in the Northstar mobile app."],
+    ["To receive a text message with a link, press one.", true],
+    ["To speak with a banker, press zero.", true],
+  ],
+  hold: [
+    ["Please hold while we connect you."],
+    ["Your estimated wait time is greater than twenty minutes."],
+  ],
 };
 
 const agentPaths = {
@@ -99,6 +168,35 @@ function setKeys(enabled) {
   $$("#keypad button").forEach((button) => { button.disabled = !enabled; });
 }
 
+function playDualTone(lowFrequency, highFrequency, duration = 0.16, muted = false) {
+  try {
+    const context = new AudioContext();
+    const gain = context.createGain();
+    gain.gain.setValueAtTime(muted ? 0 : 0.055, context.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, context.currentTime + duration);
+    for (const frequency of [lowFrequency, highFrequency]) {
+      const oscillator = context.createOscillator();
+      oscillator.frequency.value = frequency;
+      oscillator.connect(gain);
+      oscillator.start();
+      oscillator.stop(context.currentTime + duration);
+    }
+    gain.connect(context.destination);
+    const closeTimer = setTimeout(() => context.close(), (duration + 0.2) * 1000);
+    return closeTimer;
+  } catch (_) {
+    return null;
+  }
+}
+
+function playRingback(onComplete, timerStore, muted = false) {
+  const ring = () => playDualTone(440, 480, 1.8, muted);
+  ring();
+  const secondRing = setTimeout(ring, 3600);
+  const answered = setTimeout(onComplete, 6100);
+  timerStore.push(secondRing, answered);
+}
+
 function startManualClock() {
   clearInterval(manualTimer);
   manualSeconds = 0;
@@ -109,34 +207,74 @@ function startManualClock() {
   }, 1000);
 }
 
+function renderManualLines(lines, activeIndex) {
+  const transcript = $("#manual-transcript");
+  transcript.replaceChildren();
+  const start = Math.max(0, Math.min(activeIndex - 1, lines.length - 3));
+  const end = Math.min(lines.length, start + 3);
+  for (let index = start; index < end; index += 1) {
+    const line = document.createElement("p");
+    line.textContent = lines[index][0];
+    line.className = index < activeIndex ? "past" : index === activeIndex ? "active" : "future";
+    transcript.append(line);
+  }
+}
+
+function setManualMessage(message) {
+  const transcript = $("#manual-transcript");
+  transcript.replaceChildren();
+  const line = document.createElement("p");
+  line.className = "active";
+  line.textContent = message;
+  transcript.append(line);
+}
+
+function speakManualLine(stage, lines, index, token) {
+  if (token !== manualPromptToken || manualStage !== stage) return;
+  if (index >= lines.length) {
+    setKeys(stage !== "hold");
+    $("#manual-state").textContent = stage === "hold" ? "Estimated wait: 20+ minutes" : "Waiting for your selection";
+    $("#skip-prompt").classList.add("hidden");
+    return;
+  }
+  renderManualLines(lines, index);
+  if (lines[index][1] && stage !== "hold") setKeys(true);
+  say(lines[index][0], {
+    slow: true,
+    onend: () => speakManualLine(stage, lines, index + 1, token),
+  });
+}
+
 function playManualStage(stage) {
+  manualPromptToken += 1;
   manualStage = stage;
-  const prompt = prompts[stage];
-  $("#manual-transcript").textContent = prompt.text;
+  const lines = manualPromptLines[stage];
   $("#manual-state").textContent = stage === "hold" ? "Waiting for a banker" : "Automated system speaking";
   $(".phone-shell").classList.add("calling");
   $("#manual-progress").style.setProperty("--progress", stage === "hold" ? "100%" : "38%");
   setKeys(false);
   $("#skip-prompt").classList.remove("hidden");
-  say(prompt.text, {
-    slow: true,
-    onend: () => {
-      setKeys(stage !== "hold");
-      $("#manual-state").textContent = stage === "hold" ? "Estimated wait: 20+ minutes" : "Waiting for your selection";
-      $("#skip-prompt").classList.add("hidden");
-    },
-  });
+  speakManualLine(stage, lines, 0, manualPromptToken);
 }
 
 function startManual() {
   $("#manual-call").classList.add("hidden");
   $("#manual-end").classList.remove("hidden");
   startManualClock();
-  playManualStage("welcome");
+  manualStage = "dialing";
+  $(".phone-shell").classList.add("calling");
+  $("#manual-state").textContent = "Ringing Northstar Bank";
+  setManualMessage("Calling…");
+  $("#manual-progress").style.setProperty("--progress", "12%");
+  setKeys(false);
+  playRingback(() => playManualStage("welcome"), manualDelays);
 }
 
 function endManual() {
   clearInterval(manualTimer);
+  manualDelays.forEach(clearTimeout);
+  manualDelays = [];
+  manualPromptToken += 1;
   stopSpeech();
   manualStage = "idle";
   $(".phone-shell").classList.remove("calling");
@@ -144,19 +282,40 @@ function endManual() {
   $("#manual-end").classList.add("hidden");
   $("#skip-prompt").classList.add("hidden");
   $("#manual-state").textContent = "Ready to call";
-  $("#manual-transcript").textContent = "Press call to enter the automated phone system.";
+  setManualMessage("Press call to enter the automated phone system.");
   $("#manual-progress").style.setProperty("--progress", "0%");
   setKeys(false);
 }
 
 function pressManualKey(key) {
-  if (manualStage === "idle") return;
-  const next = prompts[manualStage]?.next[key];
-  $("#manual-state").textContent = `You pressed ${key}`;
+  if (manualStage === "idle" || manualStage === "dialing") return;
+  const selectedStage = manualStage;
+  const next = prompts[selectedStage]?.next[key];
+  manualPromptToken += 1;
+  manualStage = "transitioning";
+  stopSpeech();
+  setKeys(false);
+  playTone(key, false);
+  $("#manual-state").textContent = `Sending ${key}…`;
   if (next) {
-    setTimeout(() => playManualStage(next), 300);
+    const acknowledged = setTimeout(() => {
+      $("#manual-state").textContent = "Selection received · one moment";
+    }, 480);
+    const nextMenu = setTimeout(() => playManualStage(next), 1650);
+    manualDelays.push(acknowledged, nextMenu);
   } else {
-    say("That is not a valid selection. Please try again.", { slow: true, onend: () => setKeys(true) });
+    const invalid = setTimeout(() => {
+      manualStage = selectedStage;
+      setManualMessage("That is not a valid selection. Please try again.");
+      say("That is not a valid selection. Please try again.", {
+        slow: true,
+        onend: () => {
+          renderManualLines(manualPromptLines[selectedStage], manualPromptLines[selectedStage].length - 1);
+          setKeys(true);
+        },
+      });
+    }, 1200);
+    manualDelays.push(invalid);
   }
 }
 
@@ -225,25 +384,23 @@ function scheduleAgentStep(path, index) {
   if (speaker === "Agent") {
     const digit = text.match(/Pressed ([0-9*#])/i)?.[1];
     if (digit) playTone(digit);
-    const timer = setTimeout(() => scheduleAgentStep(path, index + 1), 700);
+    $("#agent-status").textContent = digit ? `Sending ${digit} to the phone system` : text;
+    const timer = setTimeout(() => scheduleAgentStep(path, index + 1), 1500);
     agentTimers.push(timer);
   } else {
     say(text, { slow: true, onend: () => scheduleAgentStep(path, index + 1) });
   }
 }
 
-function playTone(key) {
-  try {
-    const context = new AudioContext();
-    const oscillator = context.createOscillator();
-    const gain = context.createGain();
-    const frequencies = { "1": 697, "2": 770, "3": 852, "4": 941, "5": 770 };
-    oscillator.frequency.value = frequencies[key] || 800;
-    gain.gain.value = callMuted ? 0 : .08;
-    oscillator.connect(gain).connect(context.destination);
-    oscillator.start();
-    oscillator.stop(context.currentTime + .12);
-  } catch (_) {}
+function playTone(key, muted = callMuted) {
+  const tones = {
+    "1": [697, 1209], "2": [697, 1336], "3": [697, 1477],
+    "4": [770, 1209], "5": [770, 1336], "6": [770, 1477],
+    "7": [852, 1209], "8": [852, 1336], "9": [852, 1477],
+    "*": [941, 1209], "0": [941, 1336], "#": [941, 1477],
+  };
+  const [low, high] = tones[key] || [800, 1200];
+  playDualTone(low, high, 0.18, muted);
 }
 
 function startAgent(event) {
@@ -259,7 +416,7 @@ function startAgent(event) {
   $("#agent-log").replaceChildren();
   $("#active-intent").textContent = intent;
   $("#agent-status-label").textContent = "AGENT WORKING";
-  $("#agent-status").textContent = "Calling Northstar Bank";
+  $("#agent-status").textContent = "Ringing Northstar Bank";
   $("#user-card").className = "user-card waiting";
   $("#user-state").textContent = "Free to do something else";
   $("#user-detail").textContent = "We will ring you when a representative answers.";
@@ -269,8 +426,11 @@ function startAgent(event) {
     agentSeconds += 1;
     $("#agent-time").textContent = formatTime(agentSeconds);
   }, 1000);
-  const timer = setTimeout(() => scheduleAgentStep(agentPaths[classifyIntent(intent)], 0), 700);
-  agentTimers.push(timer);
+  addAgentLog("System", "Dialing Northstar Bank");
+  playRingback(() => {
+    addAgentLog("System", "Call answered by the automated system");
+    scheduleAgentStep(agentPaths[classifyIntent(intent)], 0);
+  }, agentTimers, callMuted);
 }
 
 function restartAgent() {
@@ -283,7 +443,10 @@ $$(".mode").forEach((button) => button.addEventListener("click", () => switchMod
 $("#manual-call").addEventListener("click", startManual);
 $("#manual-end").addEventListener("click", endManual);
 $("#skip-prompt").addEventListener("click", () => {
+  manualPromptToken += 1;
   stopSpeech();
+  const lines = manualPromptLines[manualStage];
+  if (lines) renderManualLines(lines, lines.length - 1);
   setKeys(manualStage !== "hold");
   $("#manual-state").textContent = manualStage === "hold" ? "Estimated wait: 20+ minutes" : "Waiting for your selection";
   $("#skip-prompt").classList.add("hidden");
