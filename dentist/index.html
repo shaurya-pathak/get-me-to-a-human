@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#112922" />
+    <meta name="description" content="Talk to a voice scheduling assistant and watch it book a simulated dental calendar." />
+    <title>Harbor Dental · Voice Scheduling Demo</title>
+    <link rel="stylesheet" href="./styles.css?v=4" />
+  </head>
+  <body>
+    <main class="shell">
+      <header class="topbar">
+        <div class="brand-mark" aria-hidden="true">H</div>
+        <div>
+          <p class="eyebrow">Harbor Dental</p>
+          <h1>Voice scheduling demo</h1>
+        </div>
+        <div class="privacy-pill"><span></span> Runs on Shaurya's Mac</div>
+        <a class="mode-link" href="../">How it works →</a>
+      </header>
+
+      <section class="status-panel" aria-label="Voice model status">
+        <div class="status-copy">
+          <p class="eyebrow">System</p>
+          <p id="system-message">Connecting to the voice server…</p>
+        </div>
+        <div class="model-list">
+          <div class="model"><span id="asr-dot" class="dot"></span><div><b>Hearing</b><small id="asr-model">Parakeet</small></div></div>
+          <div class="model"><span id="llm-dot" class="dot"></span><div><b>Understanding</b><small id="llm-model">DeepSeek</small></div></div>
+          <div class="model"><span id="tts-dot" class="dot"></span><div><b>Voice</b><small id="tts-model">Qwen3-TTS</small></div></div>
+        </div>
+      </section>
+
+      <div class="workspace">
+        <section class="call-card">
+          <div class="call-head">
+            <div><p class="eyebrow">Live conversation</p><h2 id="call-title">Ready when you are</h2></div>
+            <span id="timer" class="timer">00:00</span>
+          </div>
+          <div id="conversation" class="conversation" aria-live="polite">
+            <div class="empty-state">
+              <div class="sound-rings"><i></i><i></i><i></i></div>
+              <h3>Schedule by voice</h3>
+              <p>Allow microphone access, speak naturally, and watch the simulated calendar update when you book.</p>
+            </div>
+          </div>
+          <div class="call-controls">
+            <div id="voice-state" class="voice-state"><span class="pulse"></span><span>Connecting</span></div>
+            <button id="start-call" class="primary" disabled><span class="phone-icon" aria-hidden="true">●</span> Start call</button>
+            <button id="stop-turn" class="secondary hidden">Finish speaking</button>
+            <button id="end-call" class="danger hidden">End call</button>
+          </div>
+          <form id="text-form" class="text-fallback hidden">
+            <input id="text-input" autocomplete="off" placeholder="Or type a caller response…" />
+            <button type="submit">Send</button>
+          </form>
+        </section>
+
+        <aside class="calendar-card">
+          <div class="calendar-head">
+            <div><p class="eyebrow">Simulated calendar</p><h2>Next openings</h2></div>
+            <button id="refresh-calendar" class="icon-button" aria-label="Refresh calendar">↻</button>
+          </div>
+          <div class="calendar-legend"><span><i class="available"></i>Available</span><span><i class="busy"></i>Busy</span><span><i class="held"></i>Penciled</span></div>
+          <div id="calendar" class="calendar-list"><p class="muted">Loading calendar…</p></div>
+        </aside>
+      </div>
+
+      <footer><span>Parakeet STT on Mac</span><span>Qwen3-TTS on Mac</span><span>Prototype calendar only</span></footer>
+    </main>
+    <script>
+      window.CALLBOX_API_BASE = new URLSearchParams(location.search).get("api") || "https://api.shauryapathak.com";
+    </script>
+    <script src="./app.js?v=4" defer></script>
+  </body>
+</html>

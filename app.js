@@ -1,6 +1,6 @@
 const API_BASE = ["localhost", "127.0.0.1"].includes(location.hostname)
   ? "http://127.0.0.1:8765"
-  : "https://api.human.shauryapathak.com";
+  : "https://api.shauryapathak.com";
 const EMAIL = "shaurypathak24@gmail.com";
 const terminalStatuses = new Set(["completed", "succeeded", "partial", "needs_user", "failed", "canceled"]);
 const statusLabels = {
