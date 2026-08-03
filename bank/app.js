@@ -1,9 +1,5 @@
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => [...document.querySelectorAll(selector)];
-const API_BASE = ["localhost", "127.0.0.1"].includes(location.hostname)
-  ? "http://127.0.0.1:8765"
-  : "https://api.shauryapathak.com";
-
 const speech = window.speechSynthesis;
 let manualTimer = null;
 let manualSeconds = 0;
@@ -15,7 +11,6 @@ let holdMusicTimer = null;
 let holdNoteIndex = 0;
 let currentUtterance = null;
 let currentAudio = null;
-let speechGeneration = 0;
 let agentTimers = [];
 let agentSeconds = 0;
 let agentClock = null;
@@ -154,7 +149,6 @@ function formatTime(seconds) {
 }
 
 function stopSpeech() {
-  speechGeneration += 1;
   speech?.cancel();
   currentUtterance = null;
   if (currentAudio) {
@@ -181,53 +175,25 @@ function browserSpeech(text, { slow = false, speaker = "Bank", onend } = {}) {
   speech.speak(utterance);
 }
 
-async function advancedSpeechUrl(text) {
-  const response = await fetch(`${API_BASE}/api/demo/tts`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ text }),
-  });
-  if (!response.ok) throw new Error(`Voice request failed (${response.status})`);
-  const payload = await response.json();
-  return new URL(payload.audio_url, API_BASE).toString();
-}
-
 function say(text, { slow = false, speaker = "Bank", onend } = {}) {
   stopSpeech();
-  if (callMuted) {
-    browserSpeech(text, { slow, speaker, onend });
-    return;
-  }
-  const generation = speechGeneration;
-  const fallback = () => {
-    if (generation !== speechGeneration) return;
-    browserSpeech(text, { slow, speaker, onend });
+  browserSpeech(text, { slow, speaker, onend });
+}
+
+function playPreparedSpeech(asset, onend) {
+  stopSpeech();
+  const audio = new Audio(`./audio/${asset}.wav`);
+  let finished = false;
+  const complete = () => {
+    if (finished) return;
+    finished = true;
+    currentAudio = null;
+    onend?.();
   };
-  void advancedSpeechUrl(text).then((url) => {
-    if (generation !== speechGeneration) return;
-    const audio = new Audio(url);
-    let finished = false;
-    const complete = () => {
-      if (finished || generation !== speechGeneration) return;
-      finished = true;
-      currentAudio = null;
-      onend?.();
-    };
-    audio.onended = complete;
-    audio.onerror = () => {
-      if (finished) return;
-      finished = true;
-      currentAudio = null;
-      fallback();
-    };
-    currentAudio = audio;
-    void audio.play().catch(() => {
-      if (finished) return;
-      finished = true;
-      currentAudio = null;
-      fallback();
-    });
-  }).catch(fallback);
+  audio.onended = complete;
+  audio.onerror = complete;
+  currentAudio = audio;
+  void audio.play().catch(complete);
 }
 
 function setKeys(enabled) {
@@ -478,44 +444,47 @@ function addAgentLog(speaker, text) {
 
 function reservationDetails(request) {
   const lower = request.toLowerCase();
-  const party = request.match(/(?:for|party of)\s+(\d+)/i)?.[1] || "2";
   if (/patio|outside|outdoor/.test(lower)) {
     return {
-      party,
+      scenario: "patio",
+      agentRequest: "Hi, I'm calling for Shaurya. Dinner for four tomorrow around seven, on the patio if possible. What do you have available?",
       hostOffer: "I don't have seven on the patio. I can do six thirty inside or seven thirty on the patio.",
       decision: "Seven thirty on the patio works. Please book that under Shaurya.",
-      summary: `Tomorrow · 7:30 PM · Patio · Party of ${party}`,
+      summary: "Tomorrow · 7:30 PM · Patio · Party of 4",
       reason: "The agent moved the time by 30 minutes to keep the patio preference.",
-      confirmation: `You're confirmed for a party of ${party} tomorrow at seven thirty on the patio.`,
+      confirmation: "You're confirmed for a party of four tomorrow at seven thirty on the patio.",
     };
   }
   if (/wheelchair|accessible|accessibility/.test(lower)) {
     return {
-      party,
+      scenario: "accessible",
+      agentRequest: "Hi, I'm calling for Shaurya. Dinner for four tomorrow around seven. We need a wheelchair accessible table. What do you have available?",
       hostOffer: "Seven o'clock is only available at a high-top table. I have an accessible table at six thirty.",
       decision: "Please take the accessible table at six thirty under Shaurya.",
-      summary: `Tomorrow · 6:30 PM · Accessible table · Party of ${party}`,
+      summary: "Tomorrow · 6:30 PM · Accessible table · Party of 4",
       reason: "The agent prioritized the accessibility requirement over the requested time.",
-      confirmation: `You're confirmed for a party of ${party} tomorrow at six thirty at an accessible table.`,
+      confirmation: "You're confirmed for a party of four tomorrow at six thirty at an accessible table.",
     };
   }
   if (/anniversary|birthday|quiet|special/.test(lower)) {
     return {
-      party,
+      scenario: "occasion",
+      agentRequest: "Hi, I'm calling for Shaurya. Dinner for four tomorrow around seven. It's a special occasion, so a quiet table would be ideal.",
       hostOffer: "I can seat you at seven, but our quiet dining room opens at seven thirty.",
       decision: "Let's do seven thirty in the quiet dining room. Please put it under Shaurya.",
-      summary: `Tomorrow · 7:30 PM · Quiet dining room · Party of ${party}`,
+      summary: "Tomorrow · 7:30 PM · Quiet dining room · Party of 4",
       reason: "The agent chose the later table to preserve the special-occasion preference.",
-      confirmation: `You're confirmed for a party of ${party} tomorrow at seven thirty in the quiet dining room.`,
+      confirmation: "You're confirmed for a party of four tomorrow at seven thirty in the quiet dining room.",
     };
   }
   return {
-    party,
+    scenario: "generic",
+    agentRequest: "Hi, I'm calling for Shaurya. I'd like a dinner reservation for four tomorrow around seven. What do you have available?",
     hostOffer: "Seven is full. I can do six thirty or seven thirty.",
     decision: "Seven thirty is closest. Please book that under Shaurya.",
-    summary: `Tomorrow · 7:30 PM · Party of ${party}`,
+    summary: "Tomorrow · 7:30 PM · Party of 4",
     reason: "The agent selected the closest available time.",
-    confirmation: `You're confirmed for a party of ${party} tomorrow at seven thirty.`,
+    confirmation: "You're confirmed for a party of four tomorrow at seven thirty.",
   };
 }
 
@@ -530,17 +499,13 @@ function addReservationLine(speaker, text) {
   $("#reservation-log").append(row);
 }
 
-function speakReservation(text, speaker, onend) {
-  say(text, { slow: speaker !== "Agent", speaker, onend });
-}
-
-function runReservationConversation(request, details) {
+function runReservationConversation(details) {
   const steps = [
-    ["Marlow", "Marlow restaurant, this is Nina. How can I help?"],
-    ["Agent", `Hi, I'm calling for Shaurya. ${request}. What do you have available?`],
-    ["Marlow", details.hostOffer],
-    ["Agent", details.decision],
-    ["Marlow", details.confirmation],
+    ["Marlow", "Marlow restaurant, this is Nina. How can I help?", "restaurant-greeting"],
+    ["Agent", details.agentRequest, `${details.scenario}-agent-request`],
+    ["Marlow", details.hostOffer, `${details.scenario}-host-offer`],
+    ["Agent", details.decision, `${details.scenario}-agent-decision`],
+    ["Marlow", details.confirmation, `${details.scenario}-confirmation`],
   ];
   const advance = (index) => {
     if (index >= steps.length) {
@@ -554,10 +519,10 @@ function runReservationConversation(request, details) {
       clearInterval(reservationClock);
       return;
     }
-    const [speaker, text] = steps[index];
+    const [speaker, text, asset] = steps[index];
     $("#reservation-status").textContent = speaker === "Agent" ? "Agent speaking" : "Restaurant speaking";
     addReservationLine(speaker, text);
-    speakReservation(text, speaker, () => advance(index + 1));
+    playPreparedSpeech(asset, () => advance(index + 1));
   };
   advance(0);
 }
@@ -588,7 +553,7 @@ function startReservation(event) {
     reservationSeconds += 1;
     $("#reservation-time").textContent = formatTime(reservationSeconds);
   }, 1000);
-  playRingback(() => runReservationConversation(request, details), reservationTimers);
+  playRingback(() => runReservationConversation(details), reservationTimers);
 }
 
 function restartReservation() {
