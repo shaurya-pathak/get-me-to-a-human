@@ -7,6 +7,9 @@ let manualSeconds = 0;
 let manualStage = "idle";
 let manualDelays = [];
 let manualPromptToken = 0;
+let holdAudioContext = null;
+let holdMusicTimer = null;
+let holdNoteIndex = 0;
 let currentUtterance = null;
 let agentTimers = [];
 let agentSeconds = 0;
@@ -207,6 +210,54 @@ function startManualClock() {
   }, 1000);
 }
 
+function prepareHoldMusic() {
+  try {
+    if (!holdAudioContext || holdAudioContext.state === "closed") holdAudioContext = new AudioContext();
+    void holdAudioContext.resume();
+  } catch (_) {}
+}
+
+function playHoldNote() {
+  if (!holdAudioContext || holdAudioContext.state === "closed") return;
+  const melody = [523.25, 659.25, 587.33, 392, 440, 523.25, 493.88, 392];
+  const frequency = melody[holdNoteIndex % melody.length];
+  holdNoteIndex += 1;
+  const oscillator = holdAudioContext.createOscillator();
+  const filter = holdAudioContext.createBiquadFilter();
+  const gain = holdAudioContext.createGain();
+  oscillator.type = "square";
+  oscillator.frequency.value = frequency;
+  filter.type = "lowpass";
+  filter.frequency.value = 1150;
+  gain.gain.setValueAtTime(0.018, holdAudioContext.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, holdAudioContext.currentTime + 0.23);
+  oscillator.connect(filter).connect(gain).connect(holdAudioContext.destination);
+  oscillator.start();
+  oscillator.stop(holdAudioContext.currentTime + 0.24);
+}
+
+function startHoldMusic() {
+  if (holdMusicTimer) return;
+  prepareHoldMusic();
+  playHoldNote();
+  holdMusicTimer = setInterval(playHoldNote, 330);
+}
+
+function stopHoldMusic() {
+  clearInterval(holdMusicTimer);
+  holdMusicTimer = null;
+  holdNoteIndex = 0;
+  if (holdAudioContext && holdAudioContext.state !== "closed") void holdAudioContext.close();
+  holdAudioContext = null;
+}
+
+function showHoldCard() {
+  $("#hold-card").classList.remove("hidden");
+  $("#manual-experience").classList.add("holding");
+  $("#manual-end").textContent = "End demo";
+  startHoldMusic();
+}
+
 function renderManualLines(lines, activeIndex) {
   const transcript = $("#manual-transcript");
   transcript.replaceChildren();
@@ -238,6 +289,7 @@ function speakManualLine(stage, lines, index, token) {
     return;
   }
   renderManualLines(lines, index);
+  if (stage === "hold" && index === 1) showHoldCard();
   if (lines[index][1] && stage !== "hold") setKeys(true);
   say(lines[index][0], {
     slow: true,
@@ -261,6 +313,7 @@ function startManual() {
   $("#manual-call").classList.add("hidden");
   $("#manual-end").classList.remove("hidden");
   startManualClock();
+  prepareHoldMusic();
   manualStage = "dialing";
   $(".phone-shell").classList.add("calling");
   $("#manual-state").textContent = "Ringing Northstar Bank";
@@ -275,11 +328,15 @@ function endManual() {
   manualDelays.forEach(clearTimeout);
   manualDelays = [];
   manualPromptToken += 1;
+  stopHoldMusic();
   stopSpeech();
   manualStage = "idle";
   $(".phone-shell").classList.remove("calling");
   $("#manual-call").classList.remove("hidden");
   $("#manual-end").classList.add("hidden");
+  $("#manual-end").textContent = "End call";
+  $("#hold-card").classList.add("hidden");
+  $("#manual-experience").classList.remove("holding");
   $("#skip-prompt").classList.add("hidden");
   $("#manual-state").textContent = "Ready to call";
   setManualMessage("Press call to enter the automated phone system.");
@@ -447,6 +504,7 @@ $("#skip-prompt").addEventListener("click", () => {
   stopSpeech();
   const lines = manualPromptLines[manualStage];
   if (lines) renderManualLines(lines, lines.length - 1);
+  if (manualStage === "hold") showHoldCard();
   setKeys(manualStage !== "hold");
   $("#manual-state").textContent = manualStage === "hold" ? "Estimated wait: 20+ minutes" : "Waiting for your selection";
   $("#skip-prompt").classList.add("hidden");

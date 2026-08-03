@@ -30,7 +30,8 @@
       </section>
 
       <section id="manual-demo" class="demo-panel" aria-label="Navigate the bank phone tree yourself">
-        <div class="phone-shell">
+        <div id="manual-experience" class="manual-experience">
+          <div class="phone-shell">
           <div class="phone-topline">
             <div><span class="live-dot"></span><span id="manual-state">Ready to call</span></div>
             <time id="manual-time">00:00</time>
@@ -54,10 +55,18 @@
             <button type="button" data-key="0">0<span>+</span></button>
             <button type="button" data-key="#">#</button>
           </div>
-          <div class="call-actions">
-            <button id="manual-call" class="primary" type="button">Call Northstar Bank</button>
-            <button id="manual-end" class="secondary hidden" type="button">End call</button>
+            <div class="call-actions">
+              <button id="manual-call" class="primary" type="button">Call Northstar Bank</button>
+              <button id="manual-end" class="secondary hidden" type="button">End call</button>
+            </div>
           </div>
+          <aside id="hold-card" class="hold-card hidden" aria-live="polite">
+            <span>ESTIMATED WAIT</span>
+            <strong>More than 20 minutes</strong>
+            <div class="hold-wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+            <h2>Now you wait by the phone.</h2>
+            <p>Stay close so you do not miss the representative when someone finally answers.</p>
+          </aside>
         </div>
         <button id="skip-prompt" class="text-button hidden" type="button">Skip prompt</button>
       </section>
