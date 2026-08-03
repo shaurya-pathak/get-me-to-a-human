@@ -13,42 +13,30 @@
     <main>
       <nav>
         <a href="../">Get Me to a Human</a>
-        <span>Interactive simulation</span>
       </nav>
 
       <header>
-        <p class="eyebrow">THE PROBLEM</p>
-        <h1>You should not have to navigate this.</h1>
-        <p class="lede">Try a bank phone tree yourself. Then give the same job to an agent and come back only when a person is ready.</p>
+        <h1>Skip the phone tree.</h1>
+        <p class="lede">Tell an agent what you need. It calls the bank and rings you when a person answers.</p>
       </header>
 
       <section class="mode-switch" aria-label="Choose a demo">
         <button class="mode active" data-mode="manual" type="button">
-          <span>1</span>
-          <strong>Do it yourself</strong>
-          <small>Listen, wait, and press every key.</small>
+          <strong>Navigate it yourself</strong>
         </button>
         <button class="mode" data-mode="agent" type="button">
-          <span>2</span>
-          <strong>Send the agent</strong>
-          <small>State the intent and leave.</small>
+          <strong>Send an agent</strong>
         </button>
       </section>
 
-      <section id="manual-demo" class="demo-panel" aria-labelledby="manual-title">
-        <div class="panel-copy">
-          <p class="eyebrow">NORTHSTAR BANK · SIMULATED</p>
-          <h2 id="manual-title">Call the bank yourself</h2>
-          <p>The menu speaks at the pace of a real phone tree. Use the keypad when it finally gives you an option.</p>
-        </div>
-
+      <section id="manual-demo" class="demo-panel" aria-label="Navigate the bank phone tree yourself">
         <div class="phone-shell">
           <div class="phone-topline">
             <div><span class="live-dot"></span><span id="manual-state">Ready to call</span></div>
             <time id="manual-time">00:00</time>
           </div>
           <div class="speaker" aria-live="polite">
-            <div class="speaker-heading"><span class="speaker-label">BANK</span><span>Gray is readable · black is being spoken</span></div>
+            <div class="speaker-heading"><span class="speaker-label">NORTHSTAR BANK</span></div>
             <div id="manual-transcript" class="prompt-carousel"><p class="active">Press call to enter the automated phone system.</p></div>
           </div>
           <div id="manual-progress" class="progress" aria-label="Call progress"></div>
@@ -71,19 +59,12 @@
             <button id="manual-end" class="secondary hidden" type="button">End call</button>
           </div>
         </div>
-        <p class="demo-note">Tip: you can skip the audio with “Skip prompt.” The bank would not let you.</p>
         <button id="skip-prompt" class="text-button hidden" type="button">Skip prompt</button>
       </section>
 
-      <section id="agent-demo" class="demo-panel hidden" aria-labelledby="agent-title">
-        <div class="panel-copy">
-          <p class="eyebrow">THE ALTERNATIVE</p>
-          <h2 id="agent-title">Tell the agent what you need</h2>
-          <p>It handles the phone tree and hold time. Listen in if you want; your attention is not required.</p>
-        </div>
-
+      <section id="agent-demo" class="demo-panel hidden" aria-label="Send an agent through the bank phone tree">
         <form id="intent-form" class="intent-form">
-          <label for="intent">What do you need from the bank?</label>
+          <label for="intent">What do you need?</label>
           <div class="intent-row">
             <input id="intent" value="Close my checking account" autocomplete="off" />
             <button class="primary" type="submit">Send agent</button>
@@ -128,18 +109,8 @@
         </div>
       </section>
 
-      <section class="explanation">
-        <h2>What the agent is doing</h2>
-        <ol>
-          <li><span>01</span><div><strong>Understands the outcome</strong><p>Your request becomes a clear objective, not a rigid menu path.</p></div></li>
-          <li><span>02</span><div><strong>Operates the call</strong><p>It listens to prompts, presses keys, responds when necessary, and waits.</p></div></li>
-          <li><span>03</span><div><strong>Detects the human</strong><p>When a representative answers, it calls you and bridges both sides.</p></div></li>
-        </ol>
-      </section>
-
       <footer>
-        <span>Fictional bank. No call is placed.</span>
-        <a href="../dentist/">See the business-side scheduling demo</a>
+        <span>Simulation only. No call is placed.</span>
       </footer>
     </main>
   </body>
