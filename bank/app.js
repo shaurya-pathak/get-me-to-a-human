@@ -1,5 +1,8 @@
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => [...document.querySelectorAll(selector)];
+const API_BASE = ["localhost", "127.0.0.1"].includes(location.hostname)
+  ? "http://127.0.0.1:8765"
+  : "https://api.shauryapathak.com";
 
 const speech = window.speechSynthesis;
 let manualTimer = null;
@@ -11,6 +14,8 @@ let holdAudioContext = null;
 let holdMusicTimer = null;
 let holdNoteIndex = 0;
 let currentUtterance = null;
+let currentAudio = null;
+let speechGeneration = 0;
 let agentTimers = [];
 let agentSeconds = 0;
 let agentClock = null;
@@ -149,12 +154,18 @@ function formatTime(seconds) {
 }
 
 function stopSpeech() {
+  speechGeneration += 1;
   speech?.cancel();
   currentUtterance = null;
+  if (currentAudio) {
+    currentAudio.pause();
+    currentAudio.removeAttribute("src");
+    currentAudio.load();
+    currentAudio = null;
+  }
 }
 
-function say(text, { slow = false, onend } = {}) {
-  stopSpeech();
+function browserSpeech(text, { slow = false, speaker = "Bank", onend } = {}) {
   if (!speech || callMuted) {
     const timer = setTimeout(() => onend?.(), Math.min(2600, 450 + text.length * 7));
     agentTimers.push(timer);
@@ -162,12 +173,61 @@ function say(text, { slow = false, onend } = {}) {
   }
   const utterance = new SpeechSynthesisUtterance(text);
   utterance.rate = slow ? 0.72 : 1.05;
-  utterance.pitch = slow ? 0.92 : 1;
+  utterance.pitch = speaker === "Agent" ? 1.03 : slow ? 0.92 : 1;
   utterance.volume = 1;
   utterance.onend = () => onend?.();
   utterance.onerror = () => onend?.();
   currentUtterance = utterance;
   speech.speak(utterance);
+}
+
+async function advancedSpeechUrl(text) {
+  const response = await fetch(`${API_BASE}/api/demo/tts`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ text }),
+  });
+  if (!response.ok) throw new Error(`Voice request failed (${response.status})`);
+  const payload = await response.json();
+  return new URL(payload.audio_url, API_BASE).toString();
+}
+
+function say(text, { slow = false, speaker = "Bank", onend } = {}) {
+  stopSpeech();
+  if (callMuted) {
+    browserSpeech(text, { slow, speaker, onend });
+    return;
+  }
+  const generation = speechGeneration;
+  const fallback = () => {
+    if (generation !== speechGeneration) return;
+    browserSpeech(text, { slow, speaker, onend });
+  };
+  void advancedSpeechUrl(text).then((url) => {
+    if (generation !== speechGeneration) return;
+    const audio = new Audio(url);
+    let finished = false;
+    const complete = () => {
+      if (finished || generation !== speechGeneration) return;
+      finished = true;
+      currentAudio = null;
+      onend?.();
+    };
+    audio.onended = complete;
+    audio.onerror = () => {
+      if (finished) return;
+      finished = true;
+      currentAudio = null;
+      fallback();
+    };
+    currentAudio = audio;
+    void audio.play().catch(() => {
+      if (finished) return;
+      finished = true;
+      currentAudio = null;
+      fallback();
+    });
+  }).catch(fallback);
 }
 
 function setKeys(enabled) {
@@ -471,21 +531,7 @@ function addReservationLine(speaker, text) {
 }
 
 function speakReservation(text, speaker, onend) {
-  stopSpeech();
-  if (!speech) {
-    const timer = setTimeout(onend, Math.min(2600, 500 + text.length * 12));
-    reservationTimers.push(timer);
-    return;
-  }
-  const utterance = new SpeechSynthesisUtterance(text);
-  const voices = speech.getVoices();
-  utterance.voice = speaker === "Agent" ? voices.find((voice) => /Samantha|Ava|Serena/i.test(voice.name)) || voices[0] : voices.find((voice) => /Daniel|Alex|Tom/i.test(voice.name)) || voices[1] || voices[0];
-  utterance.rate = speaker === "Agent" ? 1.05 : .94;
-  utterance.pitch = speaker === "Agent" ? 1.03 : .95;
-  utterance.onend = onend;
-  utterance.onerror = onend;
-  currentUtterance = utterance;
-  speech.speak(utterance);
+  say(text, { slow: speaker !== "Agent", speaker, onend });
 }
 
 function runReservationConversation(request, details) {
@@ -522,6 +568,8 @@ function startReservation(event) {
   if (!request) return;
   endManual();
   clearAgentTimers();
+  callMuted = false;
+  $("#audio-toggle").textContent = "Mute call";
   reservationTimers.forEach(clearTimeout);
   reservationTimers = [];
   clearInterval(reservationClock);
