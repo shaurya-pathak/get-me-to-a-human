@@ -25,6 +25,7 @@ header { max-width: 700px; padding: 52px 0 32px; }
 h1, h2, h3, p { margin-top: 0; }
 h1 { max-width: 650px; margin-bottom: 10px; font-size: clamp(32px, 4.5vw, 48px); line-height: 1.05; letter-spacing: -.035em; }
 .lede { max-width: 670px; margin: 0; color: var(--muted); font-size: 18px; }
+.scenario-title { margin: 0 0 14px; font-size: 22px; letter-spacing: -.015em; }
 
 .mode-switch { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--line); background: var(--surface); }
 .mode { padding: 15px 18px; border: 0; background: transparent; color: var(--ink); text-align: center; }
@@ -112,6 +113,27 @@ h1 { max-width: 650px; margin-bottom: 10px; font-size: clamp(32px, 4.5vw, 48px);
 .attention span { color: var(--muted); font-size: 12px; }
 .attention strong { font-size: 18px; }
 #restart-agent { margin: 0 20px 20px; }
+
+.reservation-demo { padding: 48px 0 52px; border-bottom: 1px solid var(--line); }
+.reservation-demo > h2 { margin-bottom: 18px; font-size: 25px; letter-spacing: -.02em; }
+.reservation-form { display: grid; gap: 8px; max-width: 760px; }
+.reservation-form label { font-size: 13px; font-weight: 650; }
+.reservation-call { max-width: 760px; margin-top: 24px; border: 1px solid var(--line); background: var(--surface); }
+.reservation-call.running .status-dot, .reservation-call.complete .status-dot { background: var(--accent); box-shadow: 0 0 0 4px rgba(23, 99, 62, .1); }
+.reservation-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 17px 20px; border-bottom: 1px solid var(--line); }
+.reservation-heading > div { display: flex; align-items: center; gap: 10px; }
+.reservation-heading strong { font-size: 14px; }
+.reservation-heading time { color: var(--muted); font-size: 12px; }
+.reservation-log { margin: 0; padding: 0 20px; list-style: none; }
+.reservation-log li { display: grid; grid-template-columns: 90px 1fr; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); font-size: 13px; }
+.reservation-log span { color: var(--muted); font-size: 11px; font-weight: 700; }
+.reservation-log p { margin: 0; }
+.reservation-log .agent p { color: var(--accent); }
+.reservation-result { margin: 20px; padding: 18px; border: 1px solid #8eb09a; background: var(--soft-accent); }
+.reservation-result span { display: block; color: var(--accent); font-size: 10px; font-weight: 750; letter-spacing: .09em; }
+.reservation-result strong { display: block; margin-top: 4px; font-size: 17px; }
+.reservation-result p { margin: 5px 0 0; color: var(--muted); font-size: 13px; }
+#reservation-restart { margin: 0 20px 20px; }
 
 footer { min-height: 64px; display: flex; align-items: center; color: var(--muted); font-size: 12px; }
 .hidden { display: none !important; }

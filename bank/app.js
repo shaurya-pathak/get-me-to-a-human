@@ -15,6 +15,9 @@ let agentTimers = [];
 let agentSeconds = 0;
 let agentClock = null;
 let callMuted = false;
+let reservationTimers = [];
+let reservationSeconds = 0;
+let reservationClock = null;
 
 const prompts = {
   welcome: {
@@ -413,6 +416,142 @@ function addAgentLog(speaker, text) {
   row.scrollIntoView({ behavior: "smooth", block: "nearest" });
 }
 
+function reservationDetails(request) {
+  const lower = request.toLowerCase();
+  const party = request.match(/(?:for|party of)\s+(\d+)/i)?.[1] || "2";
+  if (/patio|outside|outdoor/.test(lower)) {
+    return {
+      party,
+      hostOffer: "I don't have seven on the patio. I can do six thirty inside or seven thirty on the patio.",
+      decision: "Seven thirty on the patio works. Please book that under Shaurya.",
+      summary: `Tomorrow · 7:30 PM · Patio · Party of ${party}`,
+      reason: "The agent moved the time by 30 minutes to keep the patio preference.",
+      confirmation: `You're confirmed for a party of ${party} tomorrow at seven thirty on the patio.`,
+    };
+  }
+  if (/wheelchair|accessible|accessibility/.test(lower)) {
+    return {
+      party,
+      hostOffer: "Seven o'clock is only available at a high-top table. I have an accessible table at six thirty.",
+      decision: "Please take the accessible table at six thirty under Shaurya.",
+      summary: `Tomorrow · 6:30 PM · Accessible table · Party of ${party}`,
+      reason: "The agent prioritized the accessibility requirement over the requested time.",
+      confirmation: `You're confirmed for a party of ${party} tomorrow at six thirty at an accessible table.`,
+    };
+  }
+  if (/anniversary|birthday|quiet|special/.test(lower)) {
+    return {
+      party,
+      hostOffer: "I can seat you at seven, but our quiet dining room opens at seven thirty.",
+      decision: "Let's do seven thirty in the quiet dining room. Please put it under Shaurya.",
+      summary: `Tomorrow · 7:30 PM · Quiet dining room · Party of ${party}`,
+      reason: "The agent chose the later table to preserve the special-occasion preference.",
+      confirmation: `You're confirmed for a party of ${party} tomorrow at seven thirty in the quiet dining room.`,
+    };
+  }
+  return {
+    party,
+    hostOffer: "Seven is full. I can do six thirty or seven thirty.",
+    decision: "Seven thirty is closest. Please book that under Shaurya.",
+    summary: `Tomorrow · 7:30 PM · Party of ${party}`,
+    reason: "The agent selected the closest available time.",
+    confirmation: `You're confirmed for a party of ${party} tomorrow at seven thirty.`,
+  };
+}
+
+function addReservationLine(speaker, text) {
+  const row = document.createElement("li");
+  row.className = speaker === "Agent" ? "agent" : "restaurant";
+  const label = document.createElement("span");
+  label.textContent = speaker;
+  const copy = document.createElement("p");
+  copy.textContent = text;
+  row.append(label, copy);
+  $("#reservation-log").append(row);
+}
+
+function speakReservation(text, speaker, onend) {
+  stopSpeech();
+  if (!speech) {
+    const timer = setTimeout(onend, Math.min(2600, 500 + text.length * 12));
+    reservationTimers.push(timer);
+    return;
+  }
+  const utterance = new SpeechSynthesisUtterance(text);
+  const voices = speech.getVoices();
+  utterance.voice = speaker === "Agent" ? voices.find((voice) => /Samantha|Ava|Serena/i.test(voice.name)) || voices[0] : voices.find((voice) => /Daniel|Alex|Tom/i.test(voice.name)) || voices[1] || voices[0];
+  utterance.rate = speaker === "Agent" ? 1.05 : .94;
+  utterance.pitch = speaker === "Agent" ? 1.03 : .95;
+  utterance.onend = onend;
+  utterance.onerror = onend;
+  currentUtterance = utterance;
+  speech.speak(utterance);
+}
+
+function runReservationConversation(request, details) {
+  const steps = [
+    ["Marlow", "Marlow restaurant, this is Nina. How can I help?"],
+    ["Agent", `Hi, I'm calling for Shaurya. ${request}. What do you have available?`],
+    ["Marlow", details.hostOffer],
+    ["Agent", details.decision],
+    ["Marlow", details.confirmation],
+  ];
+  const advance = (index) => {
+    if (index >= steps.length) {
+      $("#reservation-status").textContent = "Reservation complete";
+      $("#reservation-summary").textContent = details.summary;
+      $("#reservation-decision").textContent = details.reason;
+      $("#reservation-result").classList.remove("hidden");
+      $("#reservation-restart").classList.remove("hidden");
+      $("#reservation-call").classList.remove("running");
+      $("#reservation-call").classList.add("complete");
+      clearInterval(reservationClock);
+      return;
+    }
+    const [speaker, text] = steps[index];
+    $("#reservation-status").textContent = speaker === "Agent" ? "Agent speaking" : "Restaurant speaking";
+    addReservationLine(speaker, text);
+    speakReservation(text, speaker, () => advance(index + 1));
+  };
+  advance(0);
+}
+
+function startReservation(event) {
+  event.preventDefault();
+  const request = $("#reservation-request").value.trim();
+  if (!request) return;
+  endManual();
+  clearAgentTimers();
+  reservationTimers.forEach(clearTimeout);
+  reservationTimers = [];
+  clearInterval(reservationClock);
+  stopSpeech();
+  const details = reservationDetails(request);
+  $("#reservation-form").classList.add("hidden");
+  $("#reservation-call").classList.remove("hidden", "complete");
+  $("#reservation-call").classList.add("running");
+  $("#reservation-log").replaceChildren();
+  $("#reservation-result").classList.add("hidden");
+  $("#reservation-restart").classList.add("hidden");
+  $("#reservation-status").textContent = "Ringing Marlow";
+  reservationSeconds = 0;
+  $("#reservation-time").textContent = "00:00";
+  reservationClock = setInterval(() => {
+    reservationSeconds += 1;
+    $("#reservation-time").textContent = formatTime(reservationSeconds);
+  }, 1000);
+  playRingback(() => runReservationConversation(request, details), reservationTimers);
+}
+
+function restartReservation() {
+  reservationTimers.forEach(clearTimeout);
+  reservationTimers = [];
+  clearInterval(reservationClock);
+  stopSpeech();
+  $("#reservation-call").classList.add("hidden");
+  $("#reservation-form").classList.remove("hidden");
+}
+
 function scheduleAgentStep(path, index) {
   if (index >= path.length) {
     $("#agent-status").textContent = "Waiting on hold";
@@ -518,4 +657,6 @@ $("#audio-toggle").addEventListener("click", () => {
   if (callMuted) stopSpeech();
 });
 $("#restart-agent").addEventListener("click", restartAgent);
+$("#reservation-form").addEventListener("submit", startReservation);
+$("#reservation-restart").addEventListener("click", restartReservation);
 setKeys(false);

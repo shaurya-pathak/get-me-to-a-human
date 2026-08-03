@@ -16,10 +16,11 @@
       </nav>
 
       <header>
-        <h1>Skip the phone tree.</h1>
-        <p class="lede">Tell an agent what you need. It calls the bank and rings you when a person answers.</p>
+        <h1>Stop making phone calls.</h1>
+        <p class="lede">Give an agent the outcome. It handles the call and brings you back only when needed.</p>
       </header>
 
+      <h2 class="scenario-title">Skip a phone tree.</h2>
       <section class="mode-switch" aria-label="Choose a demo">
         <button class="mode active" data-mode="manual" type="button">
           <strong>Navigate it yourself</strong>
@@ -115,6 +116,31 @@
             </aside>
           </div>
           <button id="restart-agent" class="secondary hidden" type="button">Try another intent</button>
+        </div>
+      </section>
+
+      <section id="reservation-demo" class="reservation-demo" aria-label="Ask an agent to make a restaurant reservation">
+        <h2>Make a reservation.</h2>
+        <form id="reservation-form" class="reservation-form">
+          <label for="reservation-request">What do you want?</label>
+          <div class="intent-row">
+            <input id="reservation-request" value="Dinner for 4 tomorrow around 7, patio if possible" autocomplete="off" />
+            <button class="primary" type="submit">Send agent</button>
+          </div>
+        </form>
+
+        <div id="reservation-call" class="reservation-call hidden">
+          <div class="reservation-heading">
+            <div><span class="status-dot"></span><strong id="reservation-status">Calling Marlow</strong></div>
+            <time id="reservation-time">00:00</time>
+          </div>
+          <ol id="reservation-log" class="reservation-log" aria-live="polite"></ol>
+          <div id="reservation-result" class="reservation-result hidden">
+            <span>RESERVED</span>
+            <strong id="reservation-summary">Tomorrow · 7:30 PM · Patio · Party of 4</strong>
+            <p id="reservation-decision">The agent moved the time by 30 minutes to keep the patio preference.</p>
+          </div>
+          <button id="reservation-restart" class="secondary hidden" type="button">Try another request</button>
         </div>
       </section>
 
