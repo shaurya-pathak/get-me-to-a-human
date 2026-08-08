@@ -3,8 +3,8 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="See an AI phone agent navigate a slow bank phone tree and bring you in when a person answers." />
-    <title>Bank phone tree demo · Get Me to a Human</title>
+    <meta name="description" content="Skip phone menus and hold time." />
+    <title>Get Me to a Human</title>
     <link rel="icon" href="../icon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="./styles.css" />
     <script src="./app.js" defer></script>
@@ -17,16 +17,16 @@
 
       <header>
         <h1>Stop making phone calls.</h1>
-        <p class="lede">Give an agent the outcome. It handles the call and brings you back only when needed.</p>
+        <p class="lede">Say what you need. Pick up when someone answers.</p>
       </header>
 
-      <h2 class="scenario-title">Skip a phone tree.</h2>
-      <section class="mode-switch" aria-label="Choose a demo">
+      <h2 class="scenario-title">Try the same call two ways.</h2>
+      <section class="mode-switch" aria-label="Choose how to call">
         <button class="mode active" data-mode="manual" type="button">
-          <strong>Navigate it yourself</strong>
+          <strong>Call yourself</strong>
         </button>
         <button class="mode" data-mode="agent" type="button">
-          <strong>Send an agent</strong>
+          <strong>Skip the menu</strong>
         </button>
       </section>
 
@@ -39,7 +39,7 @@
           </div>
           <div class="speaker" aria-live="polite">
             <div class="speaker-heading"><span class="speaker-label">NORTHSTAR BANK</span></div>
-            <div id="manual-transcript" class="prompt-carousel"><p class="active">Press call to enter the automated phone system.</p></div>
+            <div id="manual-transcript" class="prompt-carousel"><p class="active">Press call to begin.</p></div>
           </div>
           <div id="manual-progress" class="progress" aria-label="Call progress"></div>
           <div id="keypad" class="keypad" aria-label="Phone keypad">
@@ -72,12 +72,12 @@
         <button id="skip-prompt" class="text-button hidden" type="button">Skip prompt</button>
       </section>
 
-      <section id="agent-demo" class="demo-panel hidden" aria-label="Send an agent through the bank phone tree">
+      <section id="agent-demo" class="demo-panel hidden" aria-label="Skip the bank phone tree">
         <form id="intent-form" class="intent-form">
           <label for="intent">What do you need?</label>
           <div class="intent-row">
             <input id="intent" value="Close my checking account" autocomplete="off" />
-            <button class="primary" type="submit">Send agent</button>
+            <button class="primary" type="submit">Start call</button>
           </div>
           <div class="examples" aria-label="Example intents">
             <button type="button" data-intent="Close my checking account">Close an account</button>
@@ -91,16 +91,16 @@
           <div class="agent-summary">
             <div>
               <span class="status-dot"></span>
-              <div><small id="agent-status-label">AGENT WORKING</small><strong id="agent-status">Calling Northstar Bank</strong></div>
+              <div><small id="agent-status-label">CALL</small><strong id="agent-status">Calling Northstar Bank</strong></div>
             </div>
             <time id="agent-time">00:00</time>
           </div>
 
-          <div class="intent-summary"><span>Intent</span><strong id="active-intent"></strong></div>
+          <div class="intent-summary"><span>Request</span><strong id="active-intent"></strong></div>
 
           <div class="call-layout">
             <div>
-              <div class="section-label"><span>Live call</span><button id="audio-toggle" class="text-button" type="button">Mute call</button></div>
+              <div class="section-label"><span>Call</span><button id="audio-toggle" class="text-button" type="button">Mute</button></div>
               <ol id="agent-log" class="agent-log" aria-live="polite"></ol>
             </div>
             <aside>
@@ -115,17 +115,17 @@
               </div>
             </aside>
           </div>
-          <button id="restart-agent" class="secondary hidden" type="button">Try another intent</button>
+          <button id="restart-agent" class="secondary hidden" type="button">Start over</button>
         </div>
       </section>
 
-      <section id="reservation-demo" class="reservation-demo" aria-label="Ask an agent to make a restaurant reservation">
-        <h2>Make a reservation.</h2>
+      <section id="reservation-demo" class="reservation-demo" aria-label="Make a restaurant reservation">
+        <h2>Make a reservation</h2>
         <form id="reservation-form" class="reservation-form">
           <label for="reservation-request">What do you want?</label>
           <div class="intent-row">
             <input id="reservation-request" value="Dinner for 4 tomorrow around 7, patio if possible" autocomplete="off" />
-            <button class="primary" type="submit">Send agent</button>
+            <button class="primary" type="submit">Call Marlow</button>
           </div>
         </form>
 
@@ -138,15 +138,11 @@
           <div id="reservation-result" class="reservation-result hidden">
             <span>RESERVED</span>
             <strong id="reservation-summary">Tomorrow · 7:30 PM · Patio · Party of 4</strong>
-            <p id="reservation-decision">The agent moved the time by 30 minutes to keep the patio preference.</p>
+            <p id="reservation-decision">Patio kept · shifted 30 minutes later</p>
           </div>
-          <button id="reservation-restart" class="secondary hidden" type="button">Try another request</button>
+          <button id="reservation-restart" class="secondary hidden" type="button">Start over</button>
         </div>
       </section>
-
-      <footer>
-        <span>Simulation only. No call is placed.</span>
-      </footer>
     </main>
   </body>
 </html>

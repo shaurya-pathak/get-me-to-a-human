@@ -117,30 +117,30 @@ const manualPromptLines = {
 
 const agentPaths = {
   close: [
-    ["Bank", "Your call may be recorded. Before we begin, hear about our new Horizon Premier credit card…"], ["Agent", "Recognized the opening menu · pressed 1 for English"],
-    ["Bank", "For account balances, recent transactions, or statements, press 1…"], ["Agent", "Pressed 1 · Accounts"],
-    ["Bank", "For checking accounts, press 1…"], ["Agent", "Pressed 1 · Checking"],
-    ["Bank", "To close an account or speak with a banker, press 4."], ["Agent", "Pressed 4 · Close account or banker"],
+    ["Bank", "Your call may be recorded. Before we begin, hear about our new Horizon Premier credit card…"], ["Agent", "1 · English"],
+    ["Bank", "For account balances, recent transactions, or statements, press 1…"], ["Agent", "1 · Accounts"],
+    ["Bank", "For checking accounts, press 1…"], ["Agent", "1 · Checking"],
+    ["Bank", "To close an account or speak with a banker, press 4."], ["Agent", "4 · Close account or banker"],
   ],
   stolen: [
-    ["Bank", "Your call may be recorded. Before we begin, hear about our new Horizon Premier credit card…"], ["Agent", "Recognized the opening menu · pressed 1 for English"],
-    ["Bank", "For debit cards, credit cards, or a lost or stolen card, press 2…"], ["Agent", "Pressed 2 · Cards"],
-    ["Bank", "If your card was lost or stolen, press 1."], ["Agent", "Pressed 1 · Lost or stolen card"],
+    ["Bank", "Your call may be recorded. Before we begin, hear about our new Horizon Premier credit card…"], ["Agent", "1 · English"],
+    ["Bank", "For debit cards, credit cards, or a lost or stolen card, press 2…"], ["Agent", "2 · Cards"],
+    ["Bank", "If your card was lost or stolen, press 1."], ["Agent", "1 · Lost or stolen card"],
   ],
   dispute: [
-    ["Bank", "Your call may be recorded. Before we begin, hear about our new Horizon Premier credit card…"], ["Agent", "Recognized the opening menu · pressed 1 for English"],
-    ["Bank", "For debit cards, credit cards, or a lost or stolen card, press 2…"], ["Agent", "Pressed 2 · Cards"],
-    ["Bank", "To dispute a transaction, press 2."], ["Agent", "Pressed 2 · Dispute transaction"],
+    ["Bank", "Your call may be recorded. Before we begin, hear about our new Horizon Premier credit card…"], ["Agent", "1 · English"],
+    ["Bank", "For debit cards, credit cards, or a lost or stolen card, press 2…"], ["Agent", "2 · Cards"],
+    ["Bank", "To dispute a transaction, press 2."], ["Agent", "2 · Dispute transaction"],
   ],
   mortgage: [
-    ["Bank", "Your call may be recorded. Before we begin, hear about our new Horizon Premier credit card…"], ["Agent", "Recognized the opening menu · pressed 1 for English"],
-    ["Bank", "For loans or mortgages, press 4…"], ["Agent", "Pressed 4 · Loans or mortgages"],
-    ["Bank", "For mortgage servicing, press 1."], ["Agent", "Pressed 1 · Mortgage servicing"],
+    ["Bank", "Your call may be recorded. Before we begin, hear about our new Horizon Premier credit card…"], ["Agent", "1 · English"],
+    ["Bank", "For loans or mortgages, press 4…"], ["Agent", "4 · Loans or mortgages"],
+    ["Bank", "For mortgage servicing, press 1."], ["Agent", "1 · Mortgage servicing"],
   ],
   other: [
-    ["Bank", "Your call may be recorded. Before we begin, hear about our new Horizon Premier credit card…"], ["Agent", "Recognized the opening menu · pressed 1 for English"],
-    ["Bank", "For all other banking needs, press 5."], ["Agent", "Pressed 5 · Other banking needs"],
-    ["Bank", "Please briefly tell me what you are calling about."], ["Agent", "Explained the caller's requested outcome"],
+    ["Bank", "Your call may be recorded. Before we begin, hear about our new Horizon Premier credit card…"], ["Agent", "1 · English"],
+    ["Bank", "For all other banking needs, press 5."], ["Agent", "5 · Other banking needs"],
+    ["Bank", "Please briefly tell me what you are calling about."], ["Agent", "Request stated"],
   ],
 };
 
@@ -283,7 +283,7 @@ function stopHoldMusic() {
 function showHoldCard() {
   $("#hold-card").classList.remove("hidden");
   $("#manual-experience").classList.add("holding");
-  $("#manual-end").textContent = "End demo";
+  $("#manual-end").textContent = "End call";
   startHoldMusic();
 }
 
@@ -330,7 +330,7 @@ function playManualStage(stage) {
   manualPromptToken += 1;
   manualStage = stage;
   const lines = manualPromptLines[stage];
-  $("#manual-state").textContent = stage === "hold" ? "Waiting for a banker" : "Automated system speaking";
+  $("#manual-state").textContent = stage === "hold" ? "Waiting for a banker" : "Northstar speaking";
   $(".phone-shell").classList.add("calling");
   $("#manual-progress").style.setProperty("--progress", stage === "hold" ? "100%" : "38%");
   setKeys(false);
@@ -368,7 +368,7 @@ function endManual() {
   $("#manual-experience").classList.remove("holding");
   $("#skip-prompt").classList.add("hidden");
   $("#manual-state").textContent = "Ready to call";
-  setManualMessage("Press call to enter the automated phone system.");
+  setManualMessage("Press call to begin.");
   $("#manual-progress").style.setProperty("--progress", "0%");
   setKeys(false);
 }
@@ -434,7 +434,7 @@ function addAgentLog(speaker, text) {
   const row = document.createElement("li");
   row.className = speaker === "Agent" ? "action" : "prompt";
   const label = document.createElement("span");
-  label.textContent = speaker;
+  label.textContent = speaker === "Bank" ? "Northstar" : "Keypad";
   const copy = document.createElement("p");
   copy.textContent = text;
   row.append(label, copy);
@@ -451,7 +451,7 @@ function reservationDetails(request) {
       hostOffer: "I don't have seven on the patio. I can do six thirty inside or seven thirty on the patio.",
       decision: "Seven thirty on the patio works. Please book that under Shaurya.",
       summary: "Tomorrow · 7:30 PM · Patio · Party of 4",
-      reason: "The agent moved the time by 30 minutes to keep the patio preference.",
+      reason: "Patio kept · shifted 30 minutes later",
       confirmation: "You're confirmed for a party of four tomorrow at seven thirty on the patio.",
     };
   }
@@ -462,7 +462,7 @@ function reservationDetails(request) {
       hostOffer: "Seven o'clock is only available at a high-top table. I have an accessible table at six thirty.",
       decision: "Please take the accessible table at six thirty under Shaurya.",
       summary: "Tomorrow · 6:30 PM · Accessible table · Party of 4",
-      reason: "The agent prioritized the accessibility requirement over the requested time.",
+      reason: "Accessible table kept · shifted 30 minutes earlier",
       confirmation: "You're confirmed for a party of four tomorrow at six thirty at an accessible table.",
     };
   }
@@ -473,7 +473,7 @@ function reservationDetails(request) {
       hostOffer: "I can seat you at seven, but our quiet dining room opens at seven thirty.",
       decision: "Let's do seven thirty in the quiet dining room. Please put it under Shaurya.",
       summary: "Tomorrow · 7:30 PM · Quiet dining room · Party of 4",
-      reason: "The agent chose the later table to preserve the special-occasion preference.",
+      reason: "Quiet room kept · shifted 30 minutes later",
       confirmation: "You're confirmed for a party of four tomorrow at seven thirty in the quiet dining room.",
     };
   }
@@ -483,7 +483,7 @@ function reservationDetails(request) {
     hostOffer: "Seven is full. I can do six thirty or seven thirty.",
     decision: "Seven thirty is closest. Please book that under Shaurya.",
     summary: "Tomorrow · 7:30 PM · Party of 4",
-    reason: "The agent selected the closest available time.",
+    reason: "Closest available time",
     confirmation: "You're confirmed for a party of four tomorrow at seven thirty.",
   };
 }
@@ -492,7 +492,7 @@ function addReservationLine(speaker, text) {
   const row = document.createElement("li");
   row.className = speaker === "Agent" ? "agent" : "restaurant";
   const label = document.createElement("span");
-  label.textContent = speaker;
+  label.textContent = speaker === "Agent" ? "Caller" : speaker;
   const copy = document.createElement("p");
   copy.textContent = text;
   row.append(label, copy);
@@ -509,7 +509,7 @@ function runReservationConversation(details) {
   ];
   const advance = (index) => {
     if (index >= steps.length) {
-      $("#reservation-status").textContent = "Reservation complete";
+      $("#reservation-status").textContent = "Reserved";
       $("#reservation-summary").textContent = details.summary;
       $("#reservation-decision").textContent = details.reason;
       $("#reservation-result").classList.remove("hidden");
@@ -520,7 +520,7 @@ function runReservationConversation(details) {
       return;
     }
     const [speaker, text, asset] = steps[index];
-    $("#reservation-status").textContent = speaker === "Agent" ? "Agent speaking" : "Restaurant speaking";
+    $("#reservation-status").textContent = speaker === "Agent" ? "Caller speaking" : "Marlow speaking";
     addReservationLine(speaker, text);
     playPreparedSpeech(asset, () => advance(index + 1));
   };
@@ -534,7 +534,7 @@ function startReservation(event) {
   endManual();
   clearAgentTimers();
   callMuted = false;
-  $("#audio-toggle").textContent = "Mute call";
+  $("#audio-toggle").textContent = "Mute";
   reservationTimers.forEach(clearTimeout);
   reservationTimers = [];
   clearInterval(reservationClock);
@@ -571,9 +571,8 @@ function scheduleAgentStep(path, index) {
     addAgentLog("Bank", "Please hold. Your estimated wait time is greater than twenty minutes.");
     say("Please hold. Your estimated wait time is greater than twenty minutes.", { slow: true });
     const holdTimer = setTimeout(() => {
-      addAgentLog("System", "Representative detected after simulated hold");
-      $("#agent-status-label").textContent = "HUMAN FOUND";
-      $("#agent-status").textContent = "Calling you now";
+      $("#agent-status-label").textContent = "CONNECTED";
+      $("#agent-status").textContent = "Calling your phone";
       $("#user-card").className = "user-card ringing";
       $("#user-state").textContent = "Your phone is ringing";
       $("#user-detail").textContent = "A Northstar representative is on the line. Answer to be connected.";
@@ -589,11 +588,11 @@ function scheduleAgentStep(path, index) {
 
   const [speaker, text] = path[index];
   addAgentLog(speaker, text);
-  $("#agent-status").textContent = speaker === "Bank" ? "Listening to the phone tree" : text;
+  $("#agent-status").textContent = speaker === "Bank" ? "Northstar speaking" : text;
   if (speaker === "Agent") {
-    const digit = text.match(/Pressed ([0-9*#])/i)?.[1];
+    const digit = text.match(/^([0-9*#])/i)?.[1];
     if (digit) playTone(digit);
-    $("#agent-status").textContent = digit ? `Sending ${digit} to the phone system` : text;
+    $("#agent-status").textContent = digit ? `Pressed ${digit}` : text;
     const timer = setTimeout(() => scheduleAgentStep(path, index + 1), 1500);
     agentTimers.push(timer);
   } else {
@@ -624,7 +623,7 @@ function startAgent(event) {
   $("#restart-agent").classList.add("hidden");
   $("#agent-log").replaceChildren();
   $("#active-intent").textContent = intent;
-  $("#agent-status-label").textContent = "AGENT WORKING";
+  $("#agent-status-label").textContent = "CALL";
   $("#agent-status").textContent = "Ringing Northstar Bank";
   $("#user-card").className = "user-card waiting";
   $("#user-state").textContent = "Free to do something else";
@@ -635,9 +634,7 @@ function startAgent(event) {
     agentSeconds += 1;
     $("#agent-time").textContent = formatTime(agentSeconds);
   }, 1000);
-  addAgentLog("System", "Dialing Northstar Bank");
   playRingback(() => {
-    addAgentLog("System", "Call answered by the automated system");
     scheduleAgentStep(agentPaths[classifyIntent(intent)], 0);
   }, agentTimers, callMuted);
 }
@@ -666,7 +663,7 @@ $("#intent-form").addEventListener("submit", startAgent);
 $$("[data-intent]").forEach((button) => button.addEventListener("click", () => { $("#intent").value = button.dataset.intent; }));
 $("#audio-toggle").addEventListener("click", () => {
   callMuted = !callMuted;
-  $("#audio-toggle").textContent = callMuted ? "Listen to call" : "Mute call";
+  $("#audio-toggle").textContent = callMuted ? "Listen" : "Mute";
   if (callMuted) stopSpeech();
 });
 $("#restart-agent").addEventListener("click", restartAgent);
